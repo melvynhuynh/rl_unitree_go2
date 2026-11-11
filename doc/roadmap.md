@@ -31,6 +31,59 @@ Work order: **setup, NB01 flat, NB02 analysis, NB03 stairs, submission**.
 
 ---
 
+## Course methods to apply
+
+Source: lecture 4 (G. Bellegarda, "Trajectory Optimization, Machine Learning, and Bio-Inspired Control"),
+lecture 5 (M. Hutter, "Legged Robots @ ETH"), and the project slides (`2026_lr_project_01.pdf`).
+Cite these lectures in the [ANSWER] cells and at the oral to link choices back to the course.
+
+### MDP design (lecture 4: "RL considerations")
+The lecture splits the design space into three groups. Each choice must be justified:
+| Group | What we choose | Where |
+| --- | --- | --- |
+| MDP design decisions | observation space, action space, reward function | NB01 1.1, NB03 3.1 |
+| Algorithm | PPO, hyperparameters, network, **random seeds / trials** | NB01 1.2 (provided, keep fixed) |
+| Environment parameters | simulator dynamics, control gains, control / env time step, noise, latency | `scene.py`, NB03 3.1b and 3.1f |
+
+- **Reward structure recommended in lecture 4** (CPG-RL): track base velocity commands (vx, vy, wz),
+  penalise the other base velocities (vz, wx, wy), penalise energy. Our baseline follows it:
+  `track_*`, `lin_vel_z`, `ang_vel_xy`, plus torque / action rate penalties.
+- **Joint space vs task space actions** (lecture 4): joint space forces the policy to learn the
+  kinematics; task space is more sample efficient. The project uses joint position targets (PD),
+  be ready to discuss this trade-off.
+- **Seeds matter** (Henderson et al., "Deep RL that Matters", lecture 4): always train several seeds
+  and compare the difference between configurations with the spread between seeds.
+
+### Sim-to-real techniques (lecture 4 "General RL techniques", lecture 5 "Key findings")
+| Technique | In the project |
+| --- | --- |
+| Privileged information (asymmetric actor-critic, teacher-student) | NB01 critic observations (foot contacts, air time) |
+| Domain randomization (mass, inertia, friction, perturbations) | NB03 3.1f (centre of mass, friction) |
+| Observation noise | NB03 3.1b |
+| Curriculum learning (easy task first, then harder) | NB03 3.1g terrain levels |
+| Reward shaping | NB01 / NB03 rewards (`feet_air_time`, relaxed penalties on stairs) |
+| Exteroception combined with proprioception | NB03 height scan |
+| Actuator modeling / system identification | not in the project: mention as missing in 2.1c |
+| Proprioceptive history encoding | not in the project: mention as a possible improvement |
+
+### Metrics from the course (lecture 4, AllGaits)
+Gaits are compared with **cost of transport (CoT)**, **mean base angular velocity** and
+**mean joint acceleration**. Use the same metrics in NB02 (CoT is required; base angular velocity
+fits the "base stability metric of your own design").
+
+### Controlled experiment candidates (pick one, NB01 1.5)
+1. **Ablation: remove `base_lin_vel` from the actor.** The real Go2 has no direct linear velocity
+   sensor (needs a state estimator). Question: how much does tracking degrade without it?
+   Links to deployability (2.1c) and privileged information (lecture 5).
+2. **Substitution: torque penalty replaced by an energy (power) penalty.** Lecture 4 recommends an
+   energy term. Question: does it lower the cost of transport, and at what tracking cost?
+3. **Ablation: remove `feet_air_time`.** Lecture 4 shows that without a structural prior (CPG) the
+   same reward leads to pathological gaits. Question: does the gait degrade into shuffling?
+4. **Sensitivity: action scale (e.g. 0.25 vs 0.5).** Confounder: it also changes the size of the
+   action rate penalty.
+
+---
+
 ## 1. Setup
 - [x] Get a GitHub token (private repo) and clone `rl_unitree_go2` on gnoto
 - [x] gnoto terminal: `bash gnoto.sh`
@@ -55,7 +108,7 @@ Work order: **setup, NB01 flat, NB02 analysis, NB03 stairs, submission**.
 - [ ] 1.4b Collect rollouts (`command_grid`)
 
 ### Controlled experiment (1.5)
-- [ ] Choose **a single** change (ablation, addition, substitution or sensitivity)
+- [ ] Choose **a single** change from the candidates in "Course methods to apply"
 - [ ] 1.5a Write the [ANSWER] **before** training (question, change, confounders, prediction)
 - [ ] 1.5b `make_variant_env_cfg` and `VARIANT_NAME`
 - [ ] 1.5c Viewer for the variant
@@ -71,7 +124,7 @@ Work order: **setup, NB01 flat, NB02 analysis, NB03 stairs, submission**.
 - [ ] `total_vertical_grf`, `peak_vertical_grf`, `weight_support`
 - [ ] `duty_factor`, `stride_frequency`, `stride_length`, `foot_clearance`
 - [ ] `action_rate`
-- [ ] Own base stability metric (e.g. roll/pitch variance)
+- [ ] Own base stability metric (e.g. mean base angular velocity or roll/pitch variance, as in lecture 4)
 - [ ] Test every function on a rollout (plausible orders of magnitude)
 
 ### Notebook
@@ -114,4 +167,13 @@ Work order: **setup, NB01 flat, NB02 analysis, NB03 stairs, submission**.
 - [ ] Re-read the "Things to think about" of every notebook section
 - [ ] Be able to justify every MDP choice (why this observation, this weight, this termination)
 - [ ] Be able to explain MDP, PPO (actor-critic, clipping, GAE), curriculum, domain randomization, sim-to-real
-- [ ] Review practicals 1 to 7 (numerical simulation, single leg control, quadruped control)
+- [ ] Review practicals 1 to 7 (numerical simulation, single leg control, Cartesian PD, CPG with Hopf oscillators, virtual model control)
+- [ ] Prepare the "Possible exam questions" from lecture 4:
+  - How are model-based and learning-based methods similar? How are they different?
+  - When would you use a model-based controller over a learning-based one, and vice versa?
+  - Designing a controller with trajectory optimization: what cost function and constraints?
+  - Training a controller with deep RL: how do you structure the MDP (observations, actions, rewards)?
+  - What are the benefits of integrating CPGs with RL?
+  - What makes RL challenging, and what do you consider when applying it to a new problem?
+- [ ] Know the sim-to-real recipe from lecture 5: actuator modeling, domain randomization, curriculum,
+  privileged teacher-student training, proprioceptive history, exteroception
