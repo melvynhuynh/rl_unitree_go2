@@ -95,14 +95,14 @@ fits the "base stability metric of your own design").
 ## 2. NB01: Flat terrain
 
 ### Baseline (1.1 to 1.4)
-- [ ] 1.1a `make_commands`: vx, vy, wz ranges, standing robots, forward-only robots, resampling time
-- [ ] 1.1b `make_observations`: actor (measurable on the real robot) / critic (plus privileged information)
-- [ ] 1.1c `make_actions`: offset from the default pose, scale
-- [ ] 1.1d `make_rewards`: linear velocity and yaw rate tracking, penalties (action rate, torques, vertical velocity, orientation...), feet air time
-- [ ] 1.1e `make_terminations`: time-out (not a failure) plus fall detection
-- [ ] 1.1f `make_events`: random initial pose, joint angles at reset
-- [ ] 1.1h Viewer with a random policy
-- [ ] 1.3 Training and TensorBoard (`mean_reward`, `episode_length`, reward terms)
+- [x] 1.1a `make_commands`: vx, vy, wz ranges, standing robots, forward-only robots, resampling time
+- [x] 1.1b `make_observations`: actor (measurable on the real robot) / critic (plus privileged information)
+- [x] 1.1c `make_actions`: offset from the default pose, scale
+- [x] 1.1d `make_rewards`: linear velocity and yaw rate tracking, penalties (action rate, torques, vertical velocity, orientation...), feet air time
+- [x] 1.1e `make_terminations`: time-out (not a failure) plus fall detection
+- [x] 1.1f `make_events`: random initial pose, joint angles at reset
+- [x] 1.1h Viewer with a random policy
+- [x] 1.3 Training and TensorBoard (`mean_reward`, `episode_length`, reward terms)
 - [ ] 1.4a Viewer: is the gait clean? Adjust one reward, retrain (2 to 4 iterations max)
 - [ ] Freeze the baseline, train it with 3 seeds
 - [ ] 1.4b Collect rollouts (`command_grid`)
