@@ -32,10 +32,10 @@ Work order: **setup, NB01 flat, NB02 analysis, NB03 stairs, submission**.
 ---
 
 ## 1. Setup
-- [ ] Get a GitHub token (private repo) and clone `rl_unitree_go2` on gnoto
-- [ ] gnoto terminal: `bash gnoto.sh`
-- [ ] Select the **LR Project Kernel**
-- [ ] Run `00_setup_check.ipynb` (GPU, simulator, viewer OK)
+- [x] Get a GitHub token (private repo) and clone `rl_unitree_go2` on gnoto
+- [x] gnoto terminal: `bash gnoto.sh`
+- [x] Select the **LR Project Kernel**
+- [x] Run `00_setup_check.ipynb` (GPU, simulator, viewer OK)
 - [ ] Read `src/lr_project/mdp/` (observations, rewards, terminations, events) to know the available building blocks
 - [ ] Read Rudin et al. 2022, *Learning to Walk in Minutes* (reward and observation tables)
 
