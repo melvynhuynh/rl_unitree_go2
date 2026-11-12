@@ -52,7 +52,6 @@ Starting point: the validated flat MDP of NB01 (1.1a to 1.1f). Only what the sta
 
 | Run | Variant | Status | Level (CSV) | Ep. length | Lin tracking | Falls (base / orient.) | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2026-11-12_17-34-45 | scan | interrupted at 329 | 5.55 | 442 | 0.39 | 0.17 / 0.14 | gnoto server stopped, no checkpoint |
 | 2026-11-12_17-53-05 | scan | complete | 5.92 | 418 | 0.38 | 0.15 / 0.14 | run 1 |
 
 Reading run 1:
