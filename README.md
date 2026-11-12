@@ -4,19 +4,19 @@ Learning velocity-tracking locomotion for the Unitree Go2 quadruped with deep re
 
 ## Demo
 
-<!-- TODO: add the GIF files to media/ (see media/README.md) -->
+<!-- TODO: upload the videos in a GitHub issue and paste each user-attachments link on its own line, in place of the TODO below it -->
 
-| Stairs, climbing up | Stairs, walking down |
-| --- | --- |
-| <img src="media/stairs_up.gif" width="100%" alt="Stairs policy climbing 20 cm steps"> | <img src="media/stairs_down.gif" width="100%" alt="Stairs policy walking down 20 cm steps"> |
+Final stairs policy on 20 cm steps, trained with observation noise and base centre of mass randomization, climbing up:
 
-Final stairs policy on 20 cm steps, trained with observation noise and base centre of mass randomization.
+TODO: stairs up video link
 
-<img src="media/flat_joystick.gif" width="60%" alt="Flat baseline driven with the joystick">
+Same policy walking down:
 
-Flat terrain baseline driven with the joystick: forward, lateral, turning, stop.
+TODO: stairs down video link
 
-Full length videos are linked in [Demo videos](#demo-videos).
+Flat terrain baseline driven with the joystick: forward, lateral, turning, stop:
+
+TODO: flat joystick video link
 
 ## Results
 
@@ -120,7 +120,7 @@ doc/
   roadmap.md               work plan and course methods applied
   nb03_progress.md         stairs decisions, runs and observations
   assignment.md            original course assignment (setup, submission rules)
-media/                     GIFs and figures shown in this README
+media/                     figures shown in this README
 ```
 
 ## Reproduce
@@ -133,14 +133,6 @@ Setup (gnoto server or a Linux machine with an NVIDIA GPU) is described in [doc/
 4. After each training run: `python scripts/summarize_runs.py` (flat) or `python scripts/summarize_runs.py stairs`, see `results/README.md`.
 
 `logs/` (checkpoints, TensorBoard files, evaluation rollouts) is not versioned, so the notebooks have to be re-run to get the trained policies.
-
-## Demo videos
-
-<!-- TODO: paste the GitHub user-attachments video links below -->
-
-- Flat baseline, joystick: TODO
-- Stairs, climbing up: TODO
-- Stairs, walking down: TODO
 
 ## Credits and license
 
