@@ -103,14 +103,14 @@ fits the "base stability metric of your own design").
 - [x] 1.1f `make_events`: random initial pose, joint angles at reset
 - [x] 1.1h Viewer with a random policy
 - [x] 1.3 Training and TensorBoard (`mean_reward`, `episode_length`, reward terms)
-- [ ] 1.4a Viewer: is the gait clean? Adjust one reward, retrain (2 to 4 iterations max)
+- [x] 1.4a Viewer: is the gait clean? Adjust one reward, retrain (2 to 4 iterations max)
 - [ ] Freeze the baseline, train it with 3 seeds
 - [ ] 1.4b Collect rollouts (`command_grid`)
 
 ### Controlled experiment (1.5)
-- [ ] Choose **a single** change from the candidates in "Course methods to apply"
-- [ ] 1.5a Write the [ANSWER] **before** training (question, change, confounders, prediction)
-- [ ] 1.5b `make_variant_env_cfg` and `VARIANT_NAME`
+- [x] Choose **a single** change from the candidates in "Course methods to apply" (chosen: ablation `no_base_lin_vel`)
+- [x] 1.5a Write the [ANSWER] **before** training (question, change, confounders, prediction)
+- [x] 1.5b `make_variant_env_cfg` and `VARIANT_NAME`
 - [ ] 1.5c Viewer for the variant
 - [ ] 1.5d Train the variant with the same 3 seeds
 - [ ] 1.5f Rollouts with the **same** `eval_name` as the baseline
