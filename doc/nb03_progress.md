@@ -56,8 +56,17 @@ Starting point: the validated flat MDP of NB01 (1.1a to 1.1f). Only what the sta
 
 Reading run 1:
 - Episodes end at the tile edge after 418 steps (8.4 s), consistent with 5.7 m at about 0.7 m/s. Episode_Reward terms are averaged over the 20 s maximum, so 0.38 lin tracking over 8.4 s is about 0.91 per second, close to flat (0.94).
-- Mean level 5.9 is near the ceiling of about 6 that the wrap-around to a random row allows.
-- Falls still end about 30 % of training episodes (stochastic policy, action std 0.96, robots kept at the limit of their ability by the curriculum). To check with the per-type levels: up or down?
+- Episode_Termination values are counts per step, not fractions (the CSV columns `term_*` too). At iteration 499: edge 9.62, base contact 0.08, bad orientation 0.08, time-out 0.04, so about 2 % of episodes end in a fall.
+- Curriculum (TensorBoard):
+
+| Tag | it 0 | 125 | 250 | 375 | 499 |
+| --- | --- | --- | --- | --- | --- |
+| mean | 4.53 | 5.61 | 6.81 | 5.72 | 5.89 |
+| stairs_up | 4.60 | 4.37 | 8.10 | 5.97 | 5.93 |
+| stairs_down | 4.46 | 6.85 | 5.51 | 5.47 | 5.85 |
+| max | 9 | 9 | 9 | 9 | 9 |
+
+- Both types end at the ceiling of about 6 set by the wrap-around to a random row: the curriculum is saturated, up and down. The peaks above 6 (stairs_up 8.1 at 250) are the initial wave of robots climbing together before passing row 9. Not rising at 500 because it cannot go higher, so more iterations are not needed for the curriculum.
 - Viewer: climbs 20 cm steps and walks straight. Descent not checked yet.
 
 ## Viewer observations
