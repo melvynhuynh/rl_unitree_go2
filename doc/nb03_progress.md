@@ -8,7 +8,7 @@ Run log: `results/nb03_stairs_training_runs.csv` (created by `scripts/summarize_
 | Phase | Content | Status |
 | --- | --- | --- |
 | A | Stairs MDP written, checked in the viewer with a random policy | done |
-| B | Run 1 "can it climb?": flat MDP + terrain scan + relaxed rewards, `USE_NOISE = False`, `USE_DR = False` (variant `scan`) | training on gnoto |
+| B | Run 1 "can it climb?": flat MDP + terrain scan + relaxed rewards, `USE_NOISE = False`, `USE_DR = False` (variant `scan`) | done: climbs and descends 20 cm |
 | C | Run 2 final: actor noise + base CoM randomization (variant `scan_noise_dr`), compare with run 1 | to do |
 | D | Only if needed: one single change based on the observed failure mode | to do |
 | E | Demo config, CSV (`kept_for_submission`), roadmap boxes, oral points | to do |
@@ -67,7 +67,7 @@ Reading run 1:
 | max | 9 | 9 | 9 | 9 | 9 |
 
 - Both types end at the ceiling of about 6 set by the wrap-around to a random row: the curriculum is saturated, up and down. The peaks above 6 (stairs_up 8.1 at 250) are the initial wave of robots climbing together before passing row 9. Not rising at 500 because it cannot go higher, so more iterations are not needed for the curriculum.
-- Viewer: climbs 20 cm steps and walks straight. Descent not checked yet.
+- Viewer: climbs and descends 20 cm steps smoothly and walks straight (see below).
 
 ## Viewer observations
 
@@ -78,11 +78,11 @@ Phase A, random policy, flags off (3.1i):
 - robots are demoted to level 0 (flat rows) after a few episodes, which confirms that the demotion works;
 - "Reset Environment" in the viewer keeps the curriculum levels: rerun the cell to see the initial spawn again.
 
+Run 1 (`scan`), demo at 20 cm on every row (3.4):
+- up: climbs out of the pit and walks straight to the tile edge, then is reset in the next identical pit;
+- down: walks down the pyramid smoothly, no fall over repeated crossings;
+- answer to "can it climb?": yes, up and down at the hardest height, without noise or randomization.
+
 ## Next step
 
-Phase B on gnoto: run 1 (variant `scan`, seed 42, flags off), then `python scripts/summarize_runs.py`. Report:
-- from TensorBoard at the end: `Curriculum/terrain_levels/mean`, `stairs_up`, `stairs_down`, and whether the mean level is still rising at iteration 500;
-- `Train/mean_reward`, `Train/mean_episode_length`, `Episode_Reward/track_linear_velocity`;
-- termination shares: `time_out`, `terrain_edge_reached`, `base_contact`, `bad_orientation`;
-- reward terms that dominate the penalties (`Episode_Reward/*`);
-- viewer (3.4, up and down at 20 cm and at a lower height): does it climb and descend, and how it fails (trips on the edges, refuses to move, slips, falls when stepping down).
+Phase C: run 2 (variant `scan_noise_dr`), set `USE_NOISE = True` and `USE_DR = True` in the "Run configuration" cell, nothing else changes. Compare with run 1: terrain levels (mean, up, down), falls per episode, episode length, linear tracking, and the viewer up and down at 20 cm.
