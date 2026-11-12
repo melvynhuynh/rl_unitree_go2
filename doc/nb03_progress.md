@@ -50,7 +50,16 @@ Starting point: the validated flat MDP of NB01 (1.1a to 1.1f). Only what the sta
 
 ## Runs
 
-None yet.
+| Run | Variant | Status | Level (CSV) | Ep. length | Lin tracking | Falls (base / orient.) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-12_17-34-45 | scan | interrupted at 329 | 5.55 | 442 | 0.39 | 0.17 / 0.14 | gnoto server stopped, no checkpoint |
+| 2026-11-12_17-53-05 | scan | complete | 5.92 | 418 | 0.38 | 0.15 / 0.14 | run 1 |
+
+Reading run 1:
+- Episodes end at the tile edge after 418 steps (8.4 s), consistent with 5.7 m at about 0.7 m/s. Episode_Reward terms are averaged over the 20 s maximum, so 0.38 lin tracking over 8.4 s is about 0.91 per second, close to flat (0.94).
+- Mean level 5.9 is near the ceiling of about 6 that the wrap-around to a random row allows.
+- Falls still end about 30 % of training episodes (stochastic policy, action std 0.96, robots kept at the limit of their ability by the curriculum). To check with the per-type levels: up or down?
+- Viewer: climbs 20 cm steps and walks straight. Descent not checked yet.
 
 ## Viewer observations
 
