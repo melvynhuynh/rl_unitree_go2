@@ -119,13 +119,13 @@ fits the "base stability metric of your own design").
 ## 3. NB02: Analysis (local, CPU)
 
 ### `src/lr_project/metrics.py`
-- [ ] `yaw_rate_error_per_step`, `yaw_rate_error`
-- [ ] `mechanical_power`, `cost_of_transport`
-- [ ] `total_vertical_grf`, `peak_vertical_grf`, `weight_support`
-- [ ] `duty_factor`, `stride_frequency`, `stride_length`, `foot_clearance`
-- [ ] `action_rate`
-- [ ] Own base stability metric (e.g. mean base angular velocity or roll/pitch variance, as in lecture 4)
-- [ ] Test every function on a rollout (plausible orders of magnitude)
+- [x] `yaw_rate_error_per_step`, `yaw_rate_error`
+- [x] `mechanical_power`, `cost_of_transport`
+- [x] `total_vertical_grf`, `peak_vertical_grf`, `weight_support`
+- [x] `duty_factor`, `stride_frequency`, `stride_length`, `foot_clearance`
+- [x] `action_rate`
+- [x] Own base stability metric: `base_ang_vel_xy`, `base_tilt`, `base_height_std`, plus `joint_acceleration` (lecture 4)
+- [x] Test every function on a rollout (done on a synthetic trot rollout; check orders of magnitude again on the real rollouts)
 
 ### Notebook
 - [ ] 2.1 Load the baseline data
