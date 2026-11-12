@@ -1,5 +1,6 @@
 # Copyright (c) 2026 Louis Gevers
 # SPDX-License-Identifier: BSD-3-Clause
+import builtins
 import copy
 import re
 import socket
@@ -82,7 +83,8 @@ def train(
     start = time.time()
     try:
         if max_minutes is None:
-            runner.learn(rl_cfg.max_iterations, init_at_random_ep_len=True)
+            with _quiet_training_log(runner, every=rl_cfg.max_iterations):
+                runner.learn(rl_cfg.max_iterations, init_at_random_ep_len=True)
         else:
             chunk = max(1, rl_cfg.save_interval // 5)
             done = 0
@@ -104,6 +106,58 @@ def train(
     print(f"[train] finished in {(time.time() - start) / 60:.1f} min")
     print(f"[train] latest checkpoint: {latest_checkpoint(run_dir)}")
     return run_dir
+
+
+class _quiet_training_log:
+    """Keep TensorBoard updates. Show a progress bar, and print the full table only at the end.
+
+    Current rsl_rl always prints inside ``Logger.log`` and ``RslRlOnPolicyRunnerCfg``
+    has no ``log_interval`` field.
+    """
+
+    def __init__(self, runner, every: int) -> None:
+        self.runner = runner
+        self.every = max(1, every)
+        self._orig = runner.logger.log
+        self._bar = None
+
+    def __enter__(self):
+        from tqdm.auto import tqdm
+
+        every = self.every
+        orig = self._orig
+        logger = self.runner.logger
+        bar = tqdm(total=every, desc="training", unit="it")
+        self._bar = bar
+
+        def log(*args, **kwargs):
+            it = kwargs.get("it", args[0] if args else 0)
+            total = kwargs.get("total_it", args[2] if len(args) > 2 else it + 1)
+            show = (it + 1) % every == 0 or it + 1 == total
+            real_print = builtins.print
+            if not show:
+                builtins.print = lambda *a, **k: None
+            try:
+                result = orig(*args, **kwargs)
+            finally:
+                builtins.print = real_print
+            import statistics
+
+            reward = statistics.mean(logger.rewbuffer) if logger.rewbuffer else None
+            bar.update(1)
+            if reward is not None:
+                bar.set_postfix(reward=f"{reward:.2f}", refresh=False)
+            if show:
+                bar.close()
+            return result
+
+        self.runner.logger.log = log
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.runner.logger.log = self._orig
+        if self._bar is not None:
+            self._bar.close()
 
 
 def latest_checkpoint(run_dir: str | Path) -> Path:
