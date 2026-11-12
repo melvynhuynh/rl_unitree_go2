@@ -7,8 +7,8 @@ Run log: `results/nb03_stairs_training_runs.csv` (created by `scripts/summarize_
 
 | Phase | Content | Status |
 | --- | --- | --- |
-| A | Stairs MDP written, checked in the viewer with a random policy | written, waiting for the viewer check |
-| B | Run 1 "can it climb?": flat MDP + terrain scan + relaxed rewards, `USE_NOISE = False`, `USE_DR = False` (variant `scan`) | to do |
+| A | Stairs MDP written, checked in the viewer with a random policy | done |
+| B | Run 1 "can it climb?": flat MDP + terrain scan + relaxed rewards, `USE_NOISE = False`, `USE_DR = False` (variant `scan`) | training on gnoto |
 | C | Run 2 final: actor noise + base CoM randomization (variant `scan_noise_dr`), compare with run 1 | to do |
 | D | Only if needed: one single change based on the observed failure mode | to do |
 | E | Demo config, CSV (`kept_for_submission`), roadmap boxes, oral points | to do |
@@ -54,8 +54,18 @@ None yet.
 
 ## Viewer observations
 
-None yet.
+Phase A, random policy, flags off (3.1i):
+- spawn correct: top platform of the pyramids, bottom of the inverted pyramids, no robot inside a step;
+- the terrain scan rays follow the steps;
+- fallen robots are reset;
+- robots are demoted to level 0 (flat rows) after a few episodes, which confirms that the demotion works;
+- "Reset Environment" in the viewer keeps the curriculum levels: rerun the cell to see the initial spawn again.
 
 ## Next step
 
-On gnoto: `git pull`, run the cells up to 3.1i with the random policy (flags off) and check: spawn on the platform for both pyramid types, scan rays visible and following the steps, robots reset after a fall. Then phase B (run 1, variant `scan`).
+Phase B on gnoto: run 1 (variant `scan`, seed 42, flags off), then `python scripts/summarize_runs.py`. Report:
+- from TensorBoard at the end: `Curriculum/terrain_levels/mean`, `stairs_up`, `stairs_down`, and whether the mean level is still rising at iteration 500;
+- `Train/mean_reward`, `Train/mean_episode_length`, `Episode_Reward/track_linear_velocity`;
+- termination shares: `time_out`, `terrain_edge_reached`, `base_contact`, `bad_orientation`;
+- reward terms that dominate the penalties (`Episode_Reward/*`);
+- viewer (3.4, up and down at 20 cm and at a lower height): does it climb and descend, and how it fails (trips on the edges, refuses to move, slips, falls when stepping down).
