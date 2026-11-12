@@ -26,7 +26,7 @@ Work order: **setup, NB01 flat, NB02 analysis, NB03 stairs, submission**.
 1. **Never leave the GPU idle**: a training runs while I code or write something else.
 2. **Check in the viewer before training** (random policy): a mistake costs seconds instead of a full run.
 3. **Change one thing at a time** between two runs.
-4. **Run log**: write every run in `doc/journal.md` (variant, change, observation). Used for the [ANSWER] cells and the oral.
+4. **Run log**: after every training run, run `python scripts/summarize_runs.py` and fill the manual columns of `results/<notebook>_training_runs.csv` (change, purpose, notes). Used for the [ANSWER] cells and the oral.
 5. **Do not over-tune**: as soon as the baseline walks cleanly, freeze it.
 
 ---
