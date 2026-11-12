@@ -50,9 +50,12 @@ Starting point: the validated flat MDP of NB01 (1.1a to 1.1f). Only what the sta
 
 ## Runs
 
-| Run | Variant | Status | Level (CSV) | Ep. length | Lin tracking | Falls (base / orient.) | Notes |
+| Run | Variant | Status | Mean level (TB, 499) | Ep. length | Lin tracking per s | Falls per step (base / orient.) | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2026-11-12_17-53-05 | scan | complete | 5.92 | 418 | 0.38 | 0.15 / 0.14 | run 1 |
+| 2026-11-12_17-53-05 | scan | complete | 5.89 | 418 | 0.92 | 0.08 / 0.08 | run 1 |
+| 2026-11-12_20-22-16 | scan_noise_dr | complete | 5.99 | 429 | 0.89 | 0.04 / 0.12 | run 2 |
+
+The `terrain_level` column of the CSV takes the first matching Curriculum tag, which is not the same for every run (5.92 for run 1, 9.0 = max for run 2): use the TensorBoard values above instead.
 
 Reading run 1:
 - Episodes end at the tile edge after 418 steps (8.4 s), consistent with 5.7 m at about 0.7 m/s. Episode_Reward terms are averaged over the 20 s maximum, so 0.38 lin tracking over 8.4 s is about 0.91 per second, close to flat (0.94).
@@ -68,6 +71,25 @@ Reading run 1:
 
 - Both types end at the ceiling of about 6 set by the wrap-around to a random row: the curriculum is saturated, up and down. The peaks above 6 (stairs_up 8.1 at 250) are the initial wave of robots climbing together before passing row 9. Not rising at 500 because it cannot go higher, so more iterations are not needed for the curriculum.
 - Viewer: climbs and descends 20 cm steps smoothly and walks straight (see below).
+
+Reading run 2 and comparison with run 1:
+
+| | Run 1 (`scan`) | Run 2 (`scan_noise_dr`) |
+| --- | --- | --- |
+| mean level at 499 | 5.89 | 5.99 |
+| stairs_up | 5.93 | 5.98 |
+| stairs_down | 5.85 | 6.00 |
+| edge reached per step | 9.62 | 8.54 |
+| falls per step (base + orientation) | 0.16 | 0.16 |
+| falls per episode | about 1.6 % | about 1.8 % |
+| episode length | 418 (8.4 s) | 429 (8.6 s) |
+| lin tracking per second of episode | 0.92 | 0.89 |
+| yaw tracking per second (max 0.5) | 0.44 | 0.42 |
+
+Run 2 curriculum (TensorBoard): mean 4.52, 5.40, 6.89, 5.66, 5.99 at iterations 0, 125, 250, 375, 499; same wave shape as run 1, saturated at the end.
+
+- Noise and CoM randomization cost almost nothing in this setting: same saturated curriculum for both types, same fall rate, tracking 3 % lower and episodes 3 % longer (the robot walks slightly slower than commanded).
+- What they bring cannot be measured here, since the evaluation uses the same simulator: robustness to sensor errors and to a shifted payload, i.e. a better chance to transfer to the real robot. Run 2 is the more deployable policy for the same performance, so it is the final one.
 
 ## Viewer observations
 
