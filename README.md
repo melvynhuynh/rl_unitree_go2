@@ -4,19 +4,18 @@ Learning velocity-tracking locomotion for the Unitree Go2 quadruped with deep re
 
 ## Demo
 
-<!-- TODO: upload the videos in a GitHub issue and paste each user-attachments link on its own line, in place of the TODO below it -->
 
 Final stairs policy on 20 cm steps, trained with observation noise and base centre of mass randomization, climbing up:
 
-TODO: stairs up video link
+https://github.com/user-attachments/assets/98ea0dae-2793-4ae0-a1c2-8fd898bf9f42
 
 Same policy walking down:
 
-TODO: stairs down video link
+https://github.com/user-attachments/assets/8acb14ff-bc37-46ea-a034-84eeec408176
 
 Flat terrain baseline driven with the joystick: forward, lateral, turning, stop:
 
-TODO: flat joystick video link
+https://github.com/user-attachments/assets/7ff6ad7a-54d2-45c0-93c6-886a96445241
 
 ## Results
 
