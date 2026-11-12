@@ -9,7 +9,7 @@ Run log: `results/nb03_stairs_training_runs.csv` (created by `scripts/summarize_
 | --- | --- | --- |
 | A | Stairs MDP written, checked in the viewer with a random policy | done |
 | B | Run 1 "can it climb?": flat MDP + terrain scan + relaxed rewards, `USE_NOISE = False`, `USE_DR = False` (variant `scan`) | done: climbs and descends 20 cm |
-| C | Run 2 final: actor noise + base CoM randomization (variant `scan_noise_dr`), compare with run 1 | to do |
+| C | Run 2 final: actor noise + base CoM randomization (variant `scan_noise_dr`), compare with run 1 | flags on, training on gnoto |
 | D | Only if needed: one single change based on the observed failure mode | to do |
 | E | Demo config, CSV (`kept_for_submission`), roadmap boxes, oral points | to do |
 
@@ -80,9 +80,9 @@ Phase A, random policy, flags off (3.1i):
 
 Run 1 (`scan`), demo at 20 cm on every row (3.4):
 - up: climbs out of the pit and walks straight to the tile edge, then is reset in the next identical pit;
-- down: walks down the pyramid smoothly, no fall over repeated crossings;
+- down: walks down the pyramid smoothly, no fall over repeated crossings; the base pitches strongly nose down and the front legs reach for the next step;
 - answer to "can it climb?": yes, up and down at the hardest height, without noise or randomization.
 
 ## Next step
 
-Phase C: run 2 (variant `scan_noise_dr`), set `USE_NOISE = True` and `USE_DR = True` in the "Run configuration" cell, nothing else changes. Compare with run 1: terrain levels (mean, up, down), falls per episode, episode length, linear tracking, and the viewer up and down at 20 cm.
+Phase C: run 2 (variant `scan_noise_dr`), `USE_NOISE = True` and `USE_DR = True` are set in the "Run configuration" cell (pushed), nothing else changes. On gnoto: `git pull`, run up to the training cell, then `python scripts/summarize_runs.py stairs`, push the CSV and send the curriculum and termination output (glob `*_scan_noise_dr`). Compare with run 1: terrain levels (mean, up, down), falls per episode, episode length, linear tracking, and the viewer up and down at 20 cm.
