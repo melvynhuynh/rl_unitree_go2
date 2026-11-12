@@ -59,15 +59,13 @@ The effect is real but small compared with the seed spread in evaluation (1.5 ti
 
 Mechanism: without `base_lin_vel` the actor is a memoryless MLP that has to infer its own velocity from the joint states, the last action and the IMU signals. While trotting the stride pattern carries this information, but during the acceleration from rest the same joint configuration can belong to different velocities and the policy cannot integrate accelerations, so it corrects later. The next test would be a proprioceptive history or a learned velocity estimator.
 
-<!-- TODO: export Fig. 8 and Fig. 7 from notebooks/02_flat_analysis.ipynb to media/ -->
+<img src="media/fig_ablation_error_vs_time.png" width="100%" alt="Start-up transient from standstill, baseline vs no base_lin_vel">
 
-<img src="media/fig_ablation_error_vs_time.png" width="80%" alt="Linear velocity error over time since the start, baseline vs no base_lin_vel">
-
-Linear velocity error over time since the start of the rollout, baseline vs variant (NB02, Fig. 8).
+Start-up transient from standstill, baseline vs variant (NB02, Fig. 8): linear velocity error over 10 s for all translating commands, zoom on the first 2 s, and mean body velocity for the command (1, 0, 0).
 
 <img src="media/fig_error_per_command.png" width="100%" alt="Tracking error per command, baseline vs no base_lin_vel">
 
-Tracking error per command, baseline vs variant (NB02, Fig. 7).
+Linear and yaw rate tracking error for each of the 27 evaluation commands, baseline vs variant (NB02, Fig. 7).
 
 ### Stairs (20 cm steps)
 
