@@ -9,9 +9,9 @@ Run log: `results/nb03_stairs_training_runs.csv` (created by `scripts/summarize_
 | --- | --- | --- |
 | A | Stairs MDP written, checked in the viewer with a random policy | done |
 | B | Run 1 "can it climb?": flat MDP + terrain scan + relaxed rewards, `USE_NOISE = False`, `USE_DR = False` (variant `scan`) | done: climbs and descends 20 cm |
-| C | Run 2 final: actor noise + base CoM randomization (variant `scan_noise_dr`), compare with run 1 | flags on, training on gnoto |
-| D | Only if needed: one single change based on the observed failure mode | to do |
-| E | Demo config, CSV (`kept_for_submission`), roadmap boxes, oral points | to do |
+| C | Run 2 final: actor noise + base CoM randomization (variant `scan_noise_dr`), compare with run 1 | done: same performance, kept for submission |
+| D | Only if needed: one single change based on the observed failure mode | skipped: run 2 crosses 20 cm up and down, rare falls |
+| E | Demo config, CSV (`kept_for_submission`), roadmap boxes, oral points | done |
 
 ## Phase A: MDP decisions
 
@@ -105,6 +105,68 @@ Run 1 (`scan`), demo at 20 cm on every row (3.4):
 - down: walks down the pyramid smoothly, no fall over repeated crossings; the base pitches strongly nose down and the front legs reach for the next step;
 - answer to "can it climb?": yes, up and down at the hardest height, without noise or randomization.
 
+Run 2 (`scan_noise_dr`), demo at 20 cm on every row (3.4):
+- up and down: crosses the stairs and walks straight, falls are rare (consistent with about 2 % of training episodes ending in a fall);
+- same posture as run 1 when stepping down (base pitched nose down);
+- demo videos up and down recorded from this run, for the presentation.
+
+Training table of run 2 at iteration 499 (output of the training cell, so these numbers are in the notebook): mean reward 10.98, episode length 438, action std 0.95; Episode_Reward track_linear_velocity 0.39, feet_air_time 0.22, track_angular_velocity 0.18, action_rate -0.12, joint_acc -0.049, ang_vel_xy -0.041, lin_vel_z -0.027, flat_orientation -0.005, joint_torques -0.003, leg_contacts -0.003.
+
+## Phase E: submission state
+
+- Final stairs run: `logs/stairs/2026-11-12_20-22-16_scan_noise_dr/` (run 2), `kept_for_submission = yes` in the CSV. Remove `model_0.pt` before zipping.
+- Backups outside the repo, in `rl_project/`: `flat_logs_2026-11-12.tar.gz`, `stairs_run1_scan.tar.gz`, `stairs_run2_scan_noise_dr.tar.gz`.
+- The assignment (`doc/assignment.md`) says written text goes only in `[ANSWER]` cells and every number quoted must come from a cell. NB03 has no `[ANSWER]` cell, so the notebook keeps the template markdown unchanged and the design choices are explained in code comments only. The run 1 vs run 2 comparison and the oral points stay in this file and in the presentation.
+- The notebook in the repo is the one executed on gnoto for run 2 (all outputs saved), with comments added afterwards. Re-running is not needed; if it is re-run, the training cell skips run 2 and the viewer cells must be stopped with the interrupt button.
+
+## Oral points (Things to think about, NB03)
+
+3.1a Commands
+- Realistic speeds on stairs: 0.5 to 1.0 m/s. The flat policy tracked up to 1.0 m/s; at 0.5 m/s and 80 % tracking the robot still covers 8 m in 20 s, more than the 5.7 m to the tile edge, so the curriculum can promote it. Slower robots would time out without being promoted. The robot walks slightly slower than commanded (tracking 0.89 per second of episode).
+- Standing still on stairs: not trained (`rel_standing_envs = 0`). A robot with a zero command is never promoted or demoted, and it spawns on the flat platform, so it would never stand on a step. On a real robot it would be useful (stopping on a staircase); it would need spawns on the steps or a command change in the middle of the stairs, and a curriculum that does not rely on the walked distance.
+
+3.1b Observations
+- Blind locomotion: possible with proprioception only, and with a history of observations the policy can feel a step after touching it (Lee et al. 2020, lecture 5). It reacts instead of anticipating: higher swing everywhere, more tripping on the first step, slower and more conservative gait. Here the actor is a memoryless MLP, so without the scan it would not know that a step is there.
+- Noise on all observations: no. The command and the last action are known exactly (set by the operator, computed by the policy); noise on them makes learning harder without matching any real error. Noise goes on what sensors measure: IMU, encoders, state estimate, elevation map.
+- Noisy critic: no. The critic only runs in simulation during training, so it can use the true state (asymmetric actor-critic, privileged information, lecture 5); a clean value estimate gives lower variance advantages. Implementation detail: actor and critic terms are built separately, because mjlab removes the noise of the terms of a group without corruption, which would also remove it from the actor if the term objects were shared.
+- Terrain scan on a real robot: an elevation map built from depth cameras or a lidar and fused over time with the state estimate (robot-centric elevation mapping on ANYmal). Error sources: drift of the state estimate, occlusions behind steps, reflections; hence a noise of a few cm. Lecture 5: exteroception combined with proprioception, with a belief that falls back on proprioception when the map is wrong (Miki et al. 2022).
+
+3.1c Actions
+- The flat scale of 0.25 rad was enough: the robot climbs 20 cm steps. The Gaussian policy output is not bounded to [-1, 1], so larger joint offsets remain reachable. A larger scale would have been the first fix if the feet caught the step edges (leg_contacts stays at -0.003).
+
+3.1d Rewards
+- Reduced: `lin_vel_z` from -2.0 to -0.5 (climbing needs about 0.3 m/s of vertical velocity) and `flat_orientation` from -1.0 to -0.2 (the base pitches to follow the stairs). After training they are small (-0.027 and -0.005), so they no longer block the task.
+- What dominates: the tracking terms (0.39 linear, 0.18 yaw) and feet air time (0.22). The largest penalty is the action rate (-0.12), then joint acceleration (-0.049) and roll and pitch rate (-0.041).
+- The yaw rate command is always 0, so `track_angular_velocity` keeps the robot walking straight.
+
+3.1e Terminations
+- `terrain_edge_reached` is a time-out, not a failure: reaching the edge is a success, and as a time-out PPO bootstraps the value of the last state instead of treating it as a dead end. As a failure, the robot would learn to avoid the edge.
+- Falls: base contact and tilt above 1 rad, as on flat ground. The base pitch on 20 cm x 30 cm stairs stays well below this limit.
+
+3.1f Events and domain randomization
+- When to sample: at startup, once per robot (4096 different bodies), like a real robot whose payload is fixed during a run. Sampling at reset gives more variety over training at some simulation cost; sampling during the episode would model a payload that moves, which is not the case here.
+- How large: x +-5 cm, y and z +-3 cm, the size of a shifted battery or payload. Larger shifts in x load the front or rear legs, whose thighs were already near torque saturation on flat ground (22.7 of 23.5 N m); beyond that the task becomes impossible for some robots, which then only teach the policy to fall. Run 2 shows that these ranges cost almost nothing (same levels and falls, tracking 3 % lower).
+- Other quantities worth randomizing: foot friction, base and payload mass, motor strength and PD gains, actuator latency (lecture 5: actuator network), external pushes, joint offsets, terrain height noise, step dimensions.
+- Initial pose: spawn within +-0.3 m of the centre of the 1.5 m platform, any yaw, so all feet stay on the platform and the robot meets the steps from every direction.
+
+3.1g Curriculum
+- Walked distance instead of reward: the distance measures task success directly (crossing the stairs). The reward mixes tracking and penalties, depends on the weights, and a robot can collect reward without progressing (stepping in place, slow and smooth). The distance also does not depend on the reward tuning.
+- Standing robots: a distance of 0 is never above the promotion threshold and never below the demotion threshold (half of a zero command times the time), so they stay at their level and add samples without curriculum signal. This is why the training uses no standing robots.
+- Other curricula: on the command (start slow, then widen the speed range), on the noise and randomization ranges (start clean, then increase), on other terrains (slopes, rough ground, gaps), on the reward weights (raise the penalties once the robot walks), or a game-inspired automatic curriculum per terrain level as in Rudin et al.
+- Reading the curve: a robot promoted beyond row 9 goes back to a random row, so a perfect policy settles around a mean level of 6, not 9. Both runs reach this ceiling for stairs up and down.
+
+Run 1 vs run 2 (for the presentation)
+
+| | Run 1 (`scan`) | Run 2 (`scan_noise_dr`) |
+| --- | --- | --- |
+| mean level at 499 | 5.89 | 5.99 |
+| stairs up / down | 5.93 / 5.85 | 5.98 / 6.00 |
+| episodes ending in a fall | about 1.6 % | about 1.8 % |
+| episode length | 418 (8.4 s) | 429 (8.6 s) |
+| lin tracking per second of episode | 0.92 | 0.89 |
+
+Noise and DR cost little in simulation; their benefit is robustness on the real robot, which this simulator cannot measure. Run 1 values come from TensorBoard and the CSV, not from a notebook cell: quote them in the slides and at the oral, not in the notebook.
+
 ## Next step
 
-Phase C: run 2 (variant `scan_noise_dr`), `USE_NOISE = True` and `USE_DR = True` are set in the "Run configuration" cell (pushed), nothing else changes. On gnoto: `git pull`, run up to the training cell, then `python scripts/summarize_runs.py stairs`, push the CSV and send the curriculum and termination output (glob `*_scan_noise_dr`). Compare with run 1: terrain levels (mean, up, down), falls per episode, episode length, linear tracking, and the viewer up and down at 20 cm.
+NB03 is finished. Remaining items are in `doc/roadmap.md`, section 5 (submission): compressed videos, 5-slide presentation, zip with `logs/stairs/2026-11-12_20-22-16_scan_noise_dr/` without `model_0.pt`.
