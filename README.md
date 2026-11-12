@@ -1,161 +1,151 @@
-# Legged Robots Project 2026: Deep RL for Quadruped Locomotion
+# Unitree Go2 locomotion with deep RL
 
-In this project you will train locomotion policies for the **Unitree Go2** quadruped with deep reinforcement learning.
-Simulations run on the GPU with [mjlab](https://mujocolab.github.io/mjlab/main/index.html) (built on MuJoCo WARP, the NVIDIA implementation of MuJoCo).
-Thousands of robots are trained in parallel, so training takes minutes rather than hours.
-You will first train policies to walk on flat ground, then run a controlled experiment of your own, and finally train a policy that climbs stairs.
+Learning velocity-tracking locomotion for the Unitree Go2 quadruped with deep reinforcement learning (PPO, mjlab / MuJoCo Warp), on flat ground and on stairs. Solo project for the EPFL Legged Robots course, 2026.
 
-## Notebooks
+## Demo
 
-Your work will mainly be contained in Jupyter notebooks under the `notebooks/` directory:
+<!-- TODO: add the GIF files to media/ (see media/README.md) -->
 
-| Notebook | Needs a GPU | What you do |
+| Stairs, climbing up | Stairs, walking down |
+| --- | --- |
+| <img src="media/stairs_up.gif" width="100%" alt="Stairs policy climbing 20 cm steps"> | <img src="media/stairs_down.gif" width="100%" alt="Stairs policy walking down 20 cm steps"> |
+
+Final stairs policy on 20 cm steps, trained with observation noise and base centre of mass randomization.
+
+<img src="media/flat_joystick.gif" width="60%" alt="Flat baseline driven with the joystick">
+
+Flat terrain baseline driven with the joystick: forward, lateral, turning, stop.
+
+Full length videos are linked in [Demo videos](#demo-videos).
+
+## Results
+
+All numbers below come from the executed notebooks (`notebooks/02_flat_analysis.ipynb`), the run logs in `results/` and the stairs progress log in `doc/nb03_progress.md`. Values are mean ± std over seeds unless stated otherwise.
+
+### Flat terrain baseline (3 seeds)
+
+Evaluation: 27 commands (vx, vy, wz) x 10 robots, 10 s from standstill, seeds 42, 1 and 2.
+
+| Metric | Value |
+| --- | --- |
+| Survival | 100 % (270/270 robots for each seed) |
+| Linear velocity error (RMS, whole grid) | 0.131 ± 0.005 m/s |
+| Yaw rate error (RMS, whole grid) | 0.084 ± 0.003 rad/s |
+| Cost of transport, linear commands | 0.73 ± 0.04 |
+| Cost of transport, linear + turn commands | 0.81 ± 0.05 |
+| Mean mechanical power | 93 ± 6 W |
+| Gait | trot with flight phases: diagonal pairs in the same contact state 78 % and 81 % of the time, front pair 19 % |
+| Duty factor, stride frequency | 0.334 ± 0.009, 2.49 ± 0.05 Hz |
+| Thigh torque, 99th percentile | 22.7 N m for a 23.5 N m limit (above 95 % of the limit during 1.18 % of the steps) |
+
+Training converges early: the mean reward reaches 95 % of its final value at iteration 163 ± 12 of 500. The hardest commands combine translation and rotation (worst single command (1, 0.5, 1) with 0.191 m/s), standing still is tracked best (0.023 m/s). The thighs work close to saturation, which is the main deployability concern together with the missing sim-to-real measures (no randomization, no noise, no actuator model) of the flat policy.
+
+### Controlled experiment: removing `base_lin_vel` from the actor (3 seeds per configuration)
+
+The real Go2 has no sensor for the base linear velocity, it has to be estimated. The variant removes `base_lin_vel` from the actor observations (48 to 45 inputs). The critic keeps it, everything else (rewards, commands, PPO settings, 500 iterations, evaluation grid and seeds) is identical. A difference counts as real when the per-seed ranges of the two configurations do not overlap; the effect size is the difference divided by the largest seed range.
+
+| Metric | Baseline | No `base_lin_vel` | Difference | Effect size | Ranges disjoint |
+| --- | --- | --- | --- | --- | --- |
+| Linear velocity error (eval) | 0.131 ± 0.005 m/s | 0.151 ± 0.007 m/s | +15 % | 1.5 | yes |
+| `error_vel_xy` at the end of training | 0.197 ± 0.002 m/s | 0.240 ± 0.005 m/s | +22 % | 4.5 | yes |
+| Linear error, first second | 0.255 ± 0.008 m/s | 0.34 ± 0.01 m/s | | | |
+| Linear error, 5 to 10 s | 0.077 ± 0.005 m/s | 0.085 ± 0.008 m/s | | | |
+| Settling time (error within 1.2 x steady state) | 0.69 ± 0.03 s | 1.02 ± 0.02 s | | | |
+| Yaw rate error (eval) | 0.084 ± 0.003 rad/s | 0.081 ± 0.002 rad/s | -3 % | 0.4 | no |
+| Survival | 100 % | 99.6 % (3 robots of seed 42 fell) | | 0.3 | no |
+| Duty factor | 0.334 ± 0.009 | 0.336 ± 0.014 | +1 % | 0.1 | no |
+| Stride frequency | 2.49 ± 0.05 Hz | 2.56 ± 0.09 Hz | +3 % | 0.4 | no |
+
+The effect is real but small compared with the seed spread in evaluation (1.5 times the seed range), and it is concentrated in the start from standstill: the variant needs 1.02 s instead of 0.69 s to settle, and after 5 s the gap is small. During training, `error_vel_xy` covers 90 % of its decrease at iteration 150 ± 9 instead of 116 ± 3. The extra error appears only for translating commands, largest for backward ones (+0.050 m/s at (-1, -0.5, -1)). Yaw tracking, survival and the gait metrics do not change.
+
+Mechanism: without `base_lin_vel` the actor is a memoryless MLP that has to infer its own velocity from the joint states, the last action and the IMU signals. While trotting the stride pattern carries this information, but during the acceleration from rest the same joint configuration can belong to different velocities and the policy cannot integrate accelerations, so it corrects later. The next test would be a proprioceptive history or a learned velocity estimator.
+
+<!-- TODO: export Fig. 8 and Fig. 7 from notebooks/02_flat_analysis.ipynb to media/ -->
+
+<img src="media/fig_ablation_error_vs_time.png" width="80%" alt="Linear velocity error over time since the start, baseline vs no base_lin_vel">
+
+Linear velocity error over time since the start of the rollout, baseline vs variant (NB02, Fig. 8).
+
+<img src="media/fig_error_per_command.png" width="100%" alt="Tracking error per command, baseline vs no base_lin_vel">
+
+Tracking error per command, baseline vs variant (NB02, Fig. 7).
+
+### Stairs (20 cm steps)
+
+Pyramid and inverted pyramid stairs, step height from 0 to 20 cm over 10 curriculum rows, forward commands of 0.5 to 1.0 m/s, one seed per configuration. Run 1 adds only the terrain height scan to the flat MDP (with relaxed vertical velocity and orientation penalties); run 2 adds observation noise on the actor and a randomized base centre of mass. Values at iteration 499.
+
+| | Run 1 (scan only) | Run 2 (scan + noise + CoM randomization) |
 | --- | --- | --- |
-| `00_setup_check.ipynb` | yes | Check that the GPU, the simulator and the interactive viewer work. |
-| `01_flat_terrain.ipynb` | yes | Build the locomotion MDP, train a baseline on flat ground, collect evaluation data, train a variant for your controlled experiment. |
-| `02_flat_analysis.ipynb` | no | Analyse the training logs and evaluation data of notebook 01: baseline performance and controlled experiment. |
-| `03_stairs.ipynb` | yes | Train a policy that walks up and down stairs, with a terrain scan, observation noise, domain randomization and a curriculum. |
- 
-The notebooks are numbered in a logical order, but **you do not have to complete them strictly one after the other**.
-Skim all of them early, then decide as a group how to split the work.
-For example, one person can implement the metrics for notebook 02 (`src/lr_project/metrics.py`) while others tune rewards in notebook 01, and the stairs task can start as soon as you have a working flat-terrain configuration.
- 
-Notebooks 01 and 03 **produce data** (policies, training logs, evaluation rollouts) and need a GPU.
-Notebook 02 only **reads** that data and runs on a CPU.
-Keep this in mind when planning your project: GPU time is the scarce resource and might not always be available!
+| Mean terrain level | 5.89 | 5.99 |
+| Level, stairs up | 5.93 | 5.98 |
+| Level, stairs down | 5.85 | 6.00 |
+| Falls per episode | about 1.6 % | about 1.8 % |
+| Episode length (ends at the tile edge) | 418 steps (8.4 s) | 429 steps (8.6 s) |
+| Linear tracking reward per second (max 1.0) | 0.92 | 0.89 |
+| Yaw tracking reward per second (max 0.5) | 0.44 | 0.42 |
 
-## Setup
+The curriculum is saturated for both runs, up and down: a robot promoted past the last row goes back to a random row, so a policy that succeeds everywhere settles around a mean level of 6, not 9. In the viewer with 20 cm steps on every row, run 1 climbs and descends without a fall over repeated crossings, and the final policy (run 2) is the one shown in the demo above. Noise and centre of mass randomization cost almost nothing here (same levels, same fall rate, tracking 3 % lower). Their benefit, robustness to sensor errors and to a shifted payload for sim-to-real transfer, cannot be measured without the real robot, since the evaluation uses the same simulator. Run 2 is kept as the final policy because it is the more deployable one for the same performance.
 
-You can work on EPFL's [gnoto server](https://gnoto.epfl.ch), or on your own machine if it runs Linux and has an NVIDIA GPU.
+## Method in brief
 
-Notebook 02 runs entirely on CPU, which should run on any platform.
-Feel free to work on this notebook locally on your laptop instead of gnoto if that is easier, but make sure to synchronize your data and code.
+The environment and the training setup are written in the notebooks (`make_commands`, `make_observations`, `make_actions`, `make_rewards`, `make_terminations`, `make_events`).
 
-### Option A: gnoto
+- Commands: on flat ground vx in [-1, 1] m/s, vy in [-0.5, 0.5] m/s, wz in [-1, 1] rad/s, resampled every 10 s, 10 % standing and 10 % forward-only robots. On stairs, forward only, 0.5 to 1.0 m/s, one command per episode.
+- Actor observations: command, base linear and angular velocity, projected gravity, joint positions and velocities, last action. On stairs, plus a terrain height scan (54 rays).
+- Critic observations: the actor terms without noise, plus foot contacts and foot air time (asymmetric actor-critic: privileged information used only during training).
+- Actions: joint position targets for the 12 joints, offset from the default standing pose, scale 0.25 rad, tracked by PD controllers.
+- Rewards: linear velocity tracking (weight 1.0) and yaw rate tracking (0.5) as the task; penalties on vertical velocity, roll and pitch rate, base orientation, joint torques, joint acceleration, action rate and leg contacts; a feet air time term against shuffling. The structure follows Rudin et al. (2022). On stairs the vertical velocity and orientation penalties are relaxed (-2.0 to -0.5 and -1.0 to -0.2), since climbing needs vertical motion and a pitched base.
+- Terminations: 20 s time-out, base contact, tilt above 1 rad. On stairs, reaching the tile edge is treated as a time-out (a success).
+- Observation noise (stairs, actor only): uniform noise on velocities, gravity, joint states and the height scan (0.05 m), none on the command and the last action.
+- Domain randomization (stairs): base centre of mass offset sampled at startup, x ±5 cm, y ±3 cm, z ±3 cm, like a fixed payload. Larger x shifts would overload thighs already near their torque limit.
+- Terrain curriculum (stairs): robots are promoted to steeper rows when they walk far enough and demoted when they cover less than half the commanded distance.
+- Training: PPO from rsl_rl, actor and critic MLPs 128x128x128, 4096 parallel robots, 500 iterations. Flat configurations are trained with seeds 42, 1 and 2; each stairs configuration with seed 42.
 
-First open gnoto and clone the project repository:
-1. Log in to [gnoto.epfl.ch](https://gnoto.epfl.ch) with your EPFL account (waiting time to get a server access depends on how busy it is)
-2. In the top left corner select `Git > Clone a repository`
-3. Enter the git repository URL: https://gitlab.epfl.ch/lgevers/2026-lr-project.git (cloning via SSH is not supported)
-4. Tick `Download repository` and click `Clone`
-5. Enter username and password:
-   - Username: your **GASPAR** username
-   - Password: use the **personal access token** on the project page in Moodle, NOT your GASPAR password.
-6. Click `Ok`
-
-After cloning, install the virtual environment for the project.
-Note that depending on server usage, this might take some time:
-1. Open a terminal in gnoto `File > New > Terminal`
-2. `cd` into the `2026-lr-project` repository
-3. Run the installation script with `bash gnoto.sh`
-4. Test your installation using the 00_setup_check.ipynb notebook
-
-Make sure to use the created `LR Project Kernel` for all of your notebooks.
-If you are running into any issues, please let the TAs know so we can help you as well as other students out.
-
-### Option B: your own PC with an NVIDIA GPU
-
-We have only tested the project on Ubuntu PCs with NVIDIA GPUs or on a M1 MacBook.
-Note that for MacBooks mjlab is CPU only, which means you can visualize and evaluate your policies, but training is unfortunately not possible (takes multiple hours).
-
-Windows has not been tested, so support is limited.
-If the project works on GPU on Windows for you, please let us know so we can share it with the class!
-
-Setup instructions:
-
-1. Check in a terminal that your GPU and driver work:
-```bash
-   nvidia-smi
-```
-   It should list your GPU. If the command is not found, install the NVIDIA driver first.
-
-2. Clone the repository and install the environment by running in the root level (same procedure as the practicals):
-```bash
-   uv sync
-```
-
-3. Open `notebooks/00_setup_check.ipynb` and run it to verify your installation.
-
+These choices follow the course material on MDP design and sim-to-real (lecture 4, G. Bellegarda; lecture 5, M. Hutter): asymmetric actor-critic, observation noise, domain randomization, curriculum and exteroception. Actuator models and proprioceptive history are not used.
 
 ## Repository structure
 
 ```
-notebooks/            the notebooks you work in
+notebooks/
+  00_setup_check.ipynb     GPU, simulator and viewer check
+  01_flat_terrain.ipynb    flat MDP, baseline training (3 seeds), ablation variant, rollouts
+  02_flat_analysis.ipynb   analysis of the baseline and of the controlled experiment (CPU only)
+  03_stairs.ipynb          stairs MDP, height scan, noise, CoM randomization, curriculum
 src/lr_project/
-  metrics.py          evaluation metrics: you implement these (used in notebook 02)
-  mdp/                building blocks of the MDP: observations, rewards, terminations, events, ...
-  scene.py            robot, terrains, sensors and simulator settings
-  train.py            PPO training and TensorBoard
-  evaluate.py         collecting evaluation rollouts
-  rollout.py          the Rollout data container (what an evaluation saves)
-  registry.py         finding your training runs
-  analysis.py         loading training logs
-  play.py             interactive viewer
-logs/                 created automatically: all your training runs and evaluation data
+  metrics.py               evaluation metrics (tracking, CoT, GRF, gait, stability)
+  ...                      starter code: MDP building blocks, scene, training, evaluation, viewer
+scripts/summarize_runs.py  builds the run log from the TensorBoard files
+results/                   run log, one CSV row per training run (logs/ is not versioned)
+doc/
+  roadmap.md               work plan and course methods applied
+  nb03_progress.md         stairs decisions, runs and observations
+  assignment.md            original course assignment (setup, submission rules)
+media/                     GIFs and figures shown in this README
 ```
- 
-You write code in the **notebooks** and in **`src/lr_project/metrics.py`**.
-You do not need to change the other files, but we encourage you to read them when working on the project: `mdp/` contains the functions you combine into your MDP, and you can also write your own functions in the notebooks.
 
-## Where your data goes
+## Reproduce
 
-Every training run gets its own folder:
- 
-```
-logs/<experiment>/<date>_<variant>/
-  params/                       exact environment and training configs (yaml)
-  model_<iteration>.pt          policy checkpoints
-  events.out.tfevents.*         training curves (TensorBoard)
-  eval/<name>_model_<it>.npz    evaluation rollouts
-```
- 
-- `experiment` groups the runs of a task (`flat`, `stairs`), and `variant` says what a run tests (e.g. `baseline`).
-- `registry.runs(experiment=..., variant=...)` finds runs by these names, so you never copy paths by hand.
-- `logs/` is ignored by git. To share runs within your group, copy the run folders.
+Setup (gnoto server or a Linux machine with an NVIDIA GPU) is described in [doc/assignment.md](doc/assignment.md): `bash gnoto.sh` on gnoto or `uv sync` locally, then the `LR Project Kernel`.
 
-## Practical tips
+1. `notebooks/01_flat_terrain.ipynb`: run sections 1.1 and 1.2, then the seed repeats in 1.3b (seeds 42, 1, 2), the `command_grid` rollouts in 1.4b, the variant training in 1.5d and its rollouts in 1.5f.
+2. `notebooks/02_flat_analysis.ipynb`: runs on CPU, reads `logs/flat/`.
+3. `notebooks/03_stairs.ipynb`: set `USE_NOISE` and `USE_DR` in the "Run configuration" cell, run 3.1 to 3.3 for training, then the demo viewer cell (`DEMO_DIRECTION`, `DEMO_STEP_HEIGHT`).
+4. After each training run: `python scripts/summarize_runs.py` (flat) or `python scripts/summarize_runs.py stairs`, see `results/README.md`.
 
-- **The viewer and training block the notebook.** 
-The viewer runs until you stop it with the **interrupt** button (■). Only then can the next cell run.
-- **The viewer and TensorBoard open through a link** printed below the cell.
-- **Check before you train.** 
-Look at your environment in the viewer with a random policy first: a mistake found there costs seconds, compared to an expensive training run on GPU.
-- **Change one thing at a time** between runs, so you know what caused a difference.
-- **GPU time on gnoto is shared.** GPUs are busy during the practical sessions and close to the deadline, so start training early!
-- **Out of GPU memory?** Restart the kernel. The viewer and training each keep an environment on the GPU.
-- **`CUDA available: False`?** You selected the wrong kernel, or there is no GPU in your session.
+`logs/` (checkpoints, TensorBoard files, evaluation rollouts) is not versioned, so the notebooks have to be re-run to get the trained policies.
 
+## Demo videos
 
-A starting point we recommend you to read the following article on training quadruped locomotion policies using GPUs:
+<!-- TODO: paste the GitHub user-attachments video links below -->
 
-> Rudin, N., Hoeller, D., Reist, P. &amp; Hutter, M.. (2022). Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement Learning. <i>Proceedings`of the 5th Conference on Robot Learning</i>, in <i>Proceedings of Machine Learning Research</i> 164:91-100 Available from https://proceedings.mlr.press/v164/rudin22a.html.
+- Flat baseline, joystick: TODO
+- Stairs, climbing up: TODO
+- Stairs, walking down: TODO
 
-This article (along with others you might see in class or look up on your own) is filled with useful information for this project!
+## Credits and license
 
-## Submission
- 
-Submit on Moodle (in a zip file named `group_xx_project.zip`, `xx` being your group number):
- 
-1. **The notebooks `01_flat_terrain.ipynb`, `02_flat_analysis.ipynb` and `03_stairs.ipynb`, fully executed with all outputs saved.**
-   Run every cell you rely on, so that all figures, tables and printed results are visible without re-running anything (as if this was a report).
-2. **A 5-slide presentation (PowerPoint)** describing:
-   - your baseline on flat terrain
-   - your controlled experiment and its experiments
-   - the stairs task
-   - **videos of your policies** (e.g. screen recordings of the viewer).
-3. **Log folder of your best policies**, i.e. specifically 2 folders only:
-    - your best performing `flat` run
-    - your best performing `train` run
+- Starter code and assignment by Louis Gevers (EPFL BioRob, Legged Robots course), released under the BSD-3-Clause license, see [LICENSE](LICENSE).
+- Built on [mjlab](https://github.com/mujocolab/mjlab) (MuJoCo Warp) and [rsl_rl](https://github.com/leggedrobotics/rsl_rl).
+- Reward and observation design inspired by N. Rudin, D. Hoeller, P. Reist and M. Hutter, "Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement Learning", CoRL 2022.
 
-**Written text goes only in the `[ANSWER]` cells** of the notebooks and must **respect the length limit** of each cell.
-Be concise: a short, precise answer backed by a figure or a number is worth more than a long one.
-Every number you mention must come from a cell in the notebook.
-
-⚠️ submission size is limited to **500 MB**, **plan ahead** of the submission deadline (see Moodle) to make sure your file fits this maximum size.
-Furthermore, **gnoto servers might be busy close to the deadline!**
-Some tips to keep file size under control:
-- Compress videos, and if still too heavy, submit the powerpoint as a PDF with links to your videos
-- Remove the initial checkpoint file (`model_0.pt`) from your log folders.
-
-The presentation is followed by an oral exam, where you will answer questions on your design choices, your results and your code.
-We provide example questions throughout the notebooks that you have to think about and that we might ask during the exam.
+My own work: the MDP design in the notebooks (commands, observations, actions, rewards, terminations, events, noise, randomization and curriculum settings), the controlled experiment, the metrics in `src/lr_project/metrics.py`, the analysis in `02_flat_analysis.ipynb`, and the run log tooling (`scripts/summarize_runs.py`, `results/`).

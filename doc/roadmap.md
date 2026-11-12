@@ -138,16 +138,16 @@ fits the "base stability metric of your own design").
 - [x] 2.2e [ANSWER] discussion (expected / unexpected, how conclusive, mechanism, next test)
 
 ## 4. NB03: Stairs
-- [ ] 3.1a `make_commands`: forward only, realistic speeds on stairs
-- [ ] 3.1b `make_observations`: add `height_scan`, noise on each term (actor only)
-- [ ] 3.1c `make_actions`: scale large enough to lift the legs
-- [ ] 3.1d `make_rewards`: start from the flat baseline, relax penalties that get in the way (vertical velocity...)
-- [ ] 3.1e `make_terminations`: fall plus `terrain_edge_reached` (time-out or failure?)
-- [ ] 3.1f `make_events`: spawn on the platform, domain randomization (centre of mass, friction)
-- [ ] Viewer: spawn, scan rays, reset after a fall
-- [ ] 3.3 Training, watch `Curriculum/terrain_levels`
-- [ ] 3.4 Viewer: up and down, over many episodes; note the failure modes
-- [ ] Back up `logs/stairs/`
+- [x] 3.1a `make_commands`: forward only, realistic speeds on stairs
+- [x] 3.1b `make_observations`: add `height_scan`, noise on each term (actor only)
+- [x] 3.1c `make_actions`: scale large enough to lift the legs
+- [x] 3.1d `make_rewards`: start from the flat baseline, relax penalties that get in the way (vertical velocity...)
+- [x] 3.1e `make_terminations`: fall plus `terrain_edge_reached` (time-out or failure?)
+- [x] 3.1f `make_events`: spawn on the platform, domain randomization (centre of mass only; friction not implemented, discussed at the oral)
+- [x] Viewer: spawn, scan rays, reset after a fall
+- [x] 3.3 Training, watch `Curriculum/terrain_levels` (run 1 `scan`, run 2 `scan_noise_dr`, both saturated at the ceiling of about 6)
+- [x] 3.4 Viewer: up and down, over many episodes; note the failure modes (run 2 at 20 cm: up and down, rare falls; videos recorded)
+- [x] Back up `logs/stairs/` (`stairs_run1_scan.tar.gz`, `stairs_run2_scan_noise_dr.tar.gz`, outside the repo)
 
 ## 5. Submission
 - [ ] Re-run the 3 notebooks, all outputs visible
@@ -177,3 +177,7 @@ fits the "base stability metric of your own design").
   - What makes RL challenging, and what do you consider when applying it to a new problem?
 - [ ] Know the sim-to-real recipe from lecture 5: actuator modeling, domain randomization, curriculum,
   privileged teacher-student training, proprioceptive history, exteroception
+
+## Later
+- [ ] Stairs evaluation notebook/script: success and fall rate at fixed step heights, up and down, many robots
+- [ ] Make the repository public after the oral and the grades, if the course policy allows it
