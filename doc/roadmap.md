@@ -125,17 +125,17 @@ fits the "base stability metric of your own design").
 - [x] `duty_factor`, `stride_frequency`, `stride_length`, `foot_clearance`
 - [x] `action_rate`
 - [x] Own base stability metric: `base_ang_vel_xy`, `base_tilt`, `base_height_std`, plus `joint_acceleration` (lecture 4)
-- [x] Test every function on a rollout (done on a synthetic trot rollout; check orders of magnitude again on the real rollouts)
+- [x] Test every function on a rollout (synthetic trot, then the real rollouts: weight support 1.01 body weights, so the GRF sign convention is fine)
 
 ### Notebook
-- [ ] 2.1 Load the baseline data
-- [ ] 2.1a Training figures (reward, episode length, terms) and [ANSWER]
-- [ ] 2.1b Evaluation figures (tracking overall and per command, CoT, stability, GRF, contact plot) and [ANSWER]
-- [ ] 2.1c [ANSWER] deployability (observations, actions, hardware measurements, sim-to-real)
-- [ ] 2.2a [ANSWER] question, H0, H1, metrics
-- [ ] 2.2b [ANSWER] methods (change, what is held fixed, seeds, confounders)
-- [ ] 2.2c Load the variant, at least 3 baseline vs variant figures and [ANSWER]
-- [ ] 2.2e [ANSWER] discussion (expected / unexpected, how conclusive, mechanism, next test)
+- [x] 2.1 Load the baseline data
+- [x] 2.1a Training figures (reward, episode length, terms) and [ANSWER]
+- [x] 2.1b Evaluation figures (tracking overall and per command, CoT, stability, GRF, contact plot) and [ANSWER]
+- [x] 2.1c [ANSWER] deployability (observations, actions, hardware measurements, sim-to-real)
+- [x] 2.2a [ANSWER] question, H0, H1, metrics
+- [x] 2.2b [ANSWER] methods (change, what is held fixed, seeds, confounders)
+- [x] 2.2c Load the variant, at least 3 baseline vs variant figures and [ANSWER]
+- [x] 2.2e [ANSWER] discussion (expected / unexpected, how conclusive, mechanism, next test)
 
 ## 4. NB03: Stairs
 - [ ] 3.1a `make_commands`: forward only, realistic speeds on stairs
